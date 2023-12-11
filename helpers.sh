@@ -70,9 +70,13 @@ function readBooleanInput() {
 
         # Check if input is valid
         if [[ "$input" == "y" ]]; then
-            return 0  # True (Yes)
+        echo true
+        break
+            # return 0  # True (Yes)
         elif [[ "$input" == "n" ]]; then
-            return 1  # False (No)
+        echo false
+        break
+            # return 1  # False (No)
         else
             printMessage "Invalid input. Please enter 'y' or 'n'." "red"
         fi
