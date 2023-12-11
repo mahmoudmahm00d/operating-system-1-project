@@ -35,6 +35,7 @@ while $loop; do
         ;;
         2) deleteDatabase ;;
         3) emptyDatabase ;;
+        4) createTable ;;
         "q") quit ;;
         # Add more cases for other options...
         *)
