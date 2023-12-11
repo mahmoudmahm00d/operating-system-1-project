@@ -60,22 +60,22 @@ checkLastOperationStatus() {
 # Function to read a boolean input (y/n)
 function readBooleanInput() {
     local input
-
+    
     while true; do
         # Prompt user for input
         read -r input
-
+        
         # Convert input to lowercase for case-insensitive comparison
         input=$(echo "$input" | tr '[:upper:]' '[:lower:]')
-
+        
         # Check if input is valid
         if [[ "$input" == "y" ]]; then
-        echo true
-        break
+            echo true
+            break
             # return 0  # True (Yes)
-        elif [[ "$input" == "n" ]]; then
-        echo false
-        break
+            elif [[ "$input" == "n" ]]; then
+            echo false
+            break
             # return 1  # False (No)
         else
             printMessage "Invalid input. Please enter 'y' or 'n'." "red"
