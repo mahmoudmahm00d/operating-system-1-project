@@ -6,6 +6,8 @@ source helpers.sh
 source highlevel.sh
 
 databasesDir=Databases/
+insertedDir=Inserted/
+deletedDir=Deleted/
 
 # Function definitions
 function createDatabase() {  #exsist from groupName
@@ -34,54 +36,50 @@ function createDatabase() {  #exsist from groupName
 }
 
 function deleteDatabase() {
-    ls -1
+    ls $databasesDir
     printMessage "Choose database name:"
     read -r databaseName
-    if test -d "$databaseName"; then
-        if [ $(find "$databaseName" -maxdepth 1 | wc -l) -eq 1 ] && test -O "$databaseName" -o -G admin; then
-            rm -r -i  "$databaseName"
+    if [ -d "$databasesDir$databaseName" ]; then
+         if [ $(find "$databasesDir$databaseName" -maxdepth 1 | wc -l) -eq 1 ] && test -O "$databasesDir$databaseName" -o -G admin; then
+            rm -r -i  "$databasesDir$databaseName"
             printMessage "Deleting Database..."
-        else
-            echo "Sorry, you do not have delete permissions or folder not empty "
-        fi
+         else
+             echo "Sorry, you do not have delete permissions or folder not empty "
+         fi
     else
         echo "Folder does not exist."
     fi
 }
-
 
 function emptyDatabase() {
-    ls -1
+    ls $databasesDir
     printMessage "Choose the database you want to empty :"
     read -r databaseName
-    if test -d "$databaseName"; then
-        if test -n "$(find "$databaseName" -mindepth 1)" && test -O "$databaseName" -o admin; then
-            printMessage "Are you sure you have emptied the database[Y/N] ?"
-            read -r value
-            if [ "$value" == "y" ]; then
-                rm -r "/home/jaydaa/DataBase/$databaseName"
-                printMessage "Emptying Database..."
-            else
-                exit 0
-            fi
+    if [ -d "$databasesDir$databaseName" ]; then
+        if  ! [ $(find "$databasesDir$databaseName" -mindepth 1 | wc -l) -eq 0 ]; then
+		if  test -O "$databasesDir$databaseName" -o -G "$databasesDir$databaseName" -o $(id -u) -eq 0 ; then
+
+           mv $databasesDir$databaseName $insertedDir
+			# rm -r $databasesDir$databaseName
+			printMessage "Emptying Database..."
+			exit 0
+            # printMessage "Are you sure you have emptied the database[Y/N] ?"
+            # read -r valu
+            # if [ "$value" == "y" ]; then
+            #     rm -r "/home/jaydaa/DataBase/$databaseName"
+            #     printMessage "Emptying Database..."
+            # else
+            #     exit 0
+            # fi
         fi
+		else
+		printMessage "Folder empty ...."
+		fi
     else
         echo "Folder does not exist."
     fi
 }
 
-function quit() {
-    printMessage "Goodbye" "green"
-    exit 0
-    # Your implementation here
-}
-
-# # create text file represt a table in csv format
-# # first column define the Id
-# # and the user select how many column in table
-# function createTable() {
-
-# }
 
 
 function createTable(){
@@ -183,3 +181,13 @@ function restoreDatabases()
             
     esac
 }
+
+function quit() {
+    printMessage "Goodbye" "green"
+    exit 0
+    # Your implementation here
+}
+
+# # create text file represt a table in csv format
+# # first column define the Id
+# # and the user select how many column in table
