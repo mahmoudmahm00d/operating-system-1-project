@@ -1,27 +1,29 @@
 #!/bin/bash
 
+#shelcheck source=/bin/null
 source helpers.sh
+#shelcheck source=/bin/null
+source highlevel.sh
+
+databasesDir=Databases/
 
 # Function definitions
 function createDatabase() {
     printMessage "Choose database name:"
     read -r databaseName
-    if ! test -d "$databaseName"; then
+    if ! test -d "$databasesDir$databaseName"; then
         printMessage "Private database [y/n]"
-        mkdir $databaseName
+        mkdir -p "$databasesDir$databaseName"
         private=$(readBooleanInput)
         printMessage "Creating '$databaseName' Database as $([ "$private" == true ] && echo "Private" || echo "Public")..."
+        createGroup "$databaseName"
+        # Change group ownership of the database directory
+        changeGroup "$databaseName" "$databasesDir$databaseName"
         if [[ "$private" == true ]]; then
-            sudo chmod 700 $databaseName
-            echo "Enter name group :"
-            read nameGroup
-            sudo chgrp $nameGroup $databaseName
+            chmod 660 "$databasesDir$databaseName"
         fi
         if [[ "$private" == false ]]; then
-            sudo chmod 666 $databaseName
-            echo "Enter name group :"
-            read nameGroup
-            sudo chgrp $nameGroup $databaseName
+            chmod 666 "$databasesDir$databaseName"
         fi
     else
         echo "Sorry, The existing '$databaseName' you want to create already exists"
@@ -33,8 +35,8 @@ function deleteDatabase() {
     printMessage "Choose database name:"
     read -r databaseName
     if test -d "$databaseName"; then
-        if [ $(find $databaseName -maxdepth 1 | wc -l) -eq 1 ] && test -O $databaseName -o -G admin; then
-            rm -r -i  $databaseName
+        if [ $(find "$databaseName" -maxdepth 1 | wc -l) -eq 1 ] && test -O "$databaseName" -o -G admin; then
+            rm -r -i  "$databaseName"
             printMessage "Deleting Database..."
         else
             echo "Sorry, you do not have delete permissions or folder not empty "
@@ -48,12 +50,12 @@ function deleteDatabase() {
 function emptyDatabase() {
     ls -1
     printMessage "Choose the database you want to empty :"
-    read -r $databaseName
-    if test -d $databaseName; then
-        if test -n "$(find $databasseName -mindepth 1)" && test -O $databaseName -o admin; then
+    read -r databaseName
+    if test -d "$databaseName"; then
+        if test -n "$(find "$databaseName" -mindepth 1)" && test -O "$databaseName" -o admin; then
             printMessage "Are you sure you have emptied the database[Y/N] ?"
-            read $value
-            if [ $value=="y" ]; then
+            read -r value
+            if [ "$value" == "y" ]; then
                 rm -r "/home/jaydaa/DataBase/$databaseName"
                 printMessage "Emptying Database..."
             else
@@ -71,22 +73,30 @@ function quit() {
     # Your implementation here
 }
 
+# # create text file represt a table in csv format
+# # first column define the Id
+# # and the user select how many column in table
+# function createTable() {
+
+# }
+
+
 function createTable(){
     ls -1
     printMessage "Choose the database in which you want to create a table: "
-    read $databaseName
-    if test -d $databaseName; then
-        if test -O $databaseName -o admin; then
+    read -r databaseName
+    if test -d "$databaseName"; then
+        if test -O "$databaseName" -o admin; then
             printMessage "Enter the table name: "
-            read $tableName
+            read -r tableName
             printMessage "Enter the number of columns: "
-            read $colNumber
+            read -r colNumber
             printMessage "Enter column names: "
             a=0
             while [ $a -lt 3 ]
             do
                 echo $a
-                read $colName
+                read -r colName
                 a=`expr $a +1`
             done
         fi
@@ -99,11 +109,11 @@ function insertData()
 {
     echo "Add new record"
     echo -n "Please enter the key: "
-    read addKey
+    read -r addKey
     sudo echo -n "$addKey : ">> $n
     echo -n "Please enter the value: "
-    read addValue
-    sudo echo $addValue | base64 >> $n
+    read -r addValue
+    sudo echo "$addValue" | base64 >> $n
 }
 
 function deleteData()
@@ -118,12 +128,12 @@ function updateData()
 {
     echo "Update a record"
     echo -n "Please enter the key to edit: "
-    read key
+    read -r key
     echo -n "Please enter the new value: "
-    read newValue
-    newValue64=$(echo $newValue | base64)
-    sudo sed -i 's/'$key' .*/'$key' : '$newValue64' /g' $n
-    newValue64=$(echo $newValue | base64)
+    read -r newValue
+    newValue64=$(echo "$newValue" | base64)
+    sudo sed -i 's/'"$key"' .*/'"$key"' : '"$newValue64"' /g' "$n"
+    newValue64=$(echo "$newValue" | base64)
 }
 # sudo sed -i 's/'$key' .*/'$key' : '$newValue64' /g' $n
 
@@ -135,16 +145,16 @@ function backupDatabases()
     ext=${backupName#*.}
     case $ext in
         "zip")
-            sudo zip $backupName $1
+            sudo zip "$backupName" "$1"
         ;;
         "gz")
-            sudo gzip $backupName $1
+            sudo gzip "$backupName" "$1"
         ;;
         "tar")
-            sudo tar -c $backupName -f $1
+            sudo tar -c "$backupName" -f "$1"
         ;;
         *)
-            break
+            return
             
     esac
 }
@@ -152,21 +162,21 @@ function backupDatabases()
 function restoreDatabases()
 {
     echo "Enter the restore name (with file extention .zip or .gz or .tar): "
-    read restoreName
+    read -r restoreName
     
     ext=${restoreName#*.}
     case $ext in
         "zip")
-            sudo zip $restoreName $1
+            sudo zip "$restoreName" "$1"
         ;;
         "gz")
-            sudo gzip $restoreName $1
+            sudo gzip "$restoreName" "$1"
         ;;
         "tar")
-            sudo tar -c $restoreName -f $1
+            sudo tar -c "$restoreName" -f "$1"
         ;;
         *)
-            break
+            return
             
     esac
 }
