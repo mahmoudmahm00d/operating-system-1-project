@@ -8,7 +8,7 @@ source highlevel.sh
 databasesDir=Databases/
 
 # Function definitions
-function createDatabase() {
+function createDatabase() {  #exsist from groupName
     printMessage "Choose database name:"
     read -r databaseName
     if ! test -d "$databasesDir$databaseName"; then
@@ -16,7 +16,10 @@ function createDatabase() {
         mkdir -p "$databasesDir$databaseName"
         private=$(readBooleanInput)
         printMessage "Creating '$databaseName' Database as $([ "$private" == true ] && echo "Private" || echo "Public")..."
-        createGroup "$databaseName"
+        if ! test -d "$databaseName"; then
+         createGroup "$databaseName"
+        fi
+        
         # Change group ownership of the database directory
         changeGroup "$databaseName" "$databasesDir$databaseName"
         if [[ "$private" == true ]]; then
